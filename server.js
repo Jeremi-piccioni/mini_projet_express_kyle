@@ -1,34 +1,61 @@
 const express = require("express")
 const app = express()
 const PORT = process.env.PORT || 3000
-const mongoose = require('mongoose')
+const mongoose = require("mongoose")
 const cors = require("cors")
-//const UserSchema = require("./UserSchema/UserSchema")
+const UserSchema = require("./UserSchema/UserSchema")
 const bodyParser = require("body-parser")
-const Joi = require("@hapi/joi")
-require('dotenv').config()
-console.log(process.env.DB_PW)
+const { userInfo } = require("os")
+//const Joi = require("@hapi/joi")
+require("dotenv").config()
 
 /////// FEATURE BRANCH WITH NO JOI. #The_sad_branch..
 
-
 app.use(cors())
 app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
 
 //ROUTES
 app.post("/api/auth/signup", (req, res) => {
   console.log("Ca post sur la page signup papy ! ")
-  console.log(req.body.email)
-  console.log(req.body.password)
+  console.log("log L21 email avant validation: " + req.body.email)
+  console.log("log L22 PW avant validation: " + req.body.password)
 
-  const schema = Joi.object({
-    email: Joi.string().min(6).required().email(),
-    password: Joi.string().min(6).required(),
-  })
+  //  const {email, password} = req.body
+  let errors = []
 
-  const validation = schema.validate(req.body)
-  res.send(validation)
+  //Check if all fields are field up
+  if (!req.body.email || !req.body.password) {
+    errors.push({ message: "All fields are required !" })
+  }
 
+  //Check if Email is valide :
+  // regex : /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+  // regex 2 : /\S+@\S+\.\S+/
+
+  console.log("match result: " + req.body.email.match(/\S+@\S+\.\S+/))
+
+  if (req.body.email.match(/\S+@\S+\.\S+/) == null) {
+    console.log("log L38 email après validation failure : " + req.body.email)
+    errors.push({ message: "Please enter a valide email" })
+  } else {
+    console.log("log L39 email after succeeded validation : " + req.body.email)
+  }
+
+  //Check if password length is greater than 6 caraters
+  if (req.body.password.length < 6) {
+    errors.push({ message: "Password must be at least 6 caraters" })
+  } else {
+    console.log("log L24 PW après validation success : " + req.body.password)
+  }
+
+  if (errors.length > 0) {
+    res.status(400).send(errors)
+  } else {
+    res.status(200).body
+    
+}
+  console.log(errors)
 })
 
 app.get("/api/auth/signup", (req, res) => {
@@ -38,10 +65,8 @@ app.get("/api/auth/signup", (req, res) => {
 })
 
 app.post("/api/auth/login", (req, res) => {
-
   console.log("Ca surf sur le post register tonton ! ")
   res.status(200).send({ message: "It all good baby" })
-
 })
 
 app.get("/api/auth/login", (req, res) => {
@@ -51,11 +76,10 @@ app.get("/api/auth/login", (req, res) => {
 
 //Connexion to Mongoose DB
 
-mongoose.connect(process.env.DB_PW,
-                    { useNewUrlParser: true })
-                    .then(() => console.log('Connected to MongoDB Baby !!!'))
-                    .catch(err => console.log(err))
-
+mongoose
+  .connect(process.env.DB_PW, { useNewUrlParser: true })
+  .then(() => console.log("Connected to MongoDB Baby !!!"))
+  .catch((err) => console.log(err))
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`)
