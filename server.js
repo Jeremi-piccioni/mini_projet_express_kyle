@@ -9,6 +9,8 @@ const Joi = require("@hapi/joi")
 require('dotenv').config()
 console.log(process.env.DB_PW)
 
+/////// FEATURE BRANCH WITH NO JOI. #The_sad_branch..
+
 
 app.use(cors())
 app.use(express.json())
