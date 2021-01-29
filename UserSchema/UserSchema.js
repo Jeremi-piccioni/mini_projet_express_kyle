@@ -1,13 +1,12 @@
 const mongoose = require('mongoose')
+const Joi = require("@hapi/joi")
 
-const UserSchema = mongoose.Schema({
-    email: {type: String,
-            required: true },
 
-    password: {type :String,
-                required: true},
-    date: {type: Date,
-            default: Date.now}
-})
+const UserSchema = Joi.object({
+        
+          email: Joi.string().min(6).required().email(),
+          password: Joi.string().min(6).required(),
+
+        })
 
 module.exports = mongoose.model('UserSchema', UserSchema ) 
