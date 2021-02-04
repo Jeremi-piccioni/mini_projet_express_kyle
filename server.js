@@ -1,13 +1,12 @@
+require("dotenv").config()
 const express = require("express")
 const app = express()
 const PORT = process.env.PORT || 3000
 const mongoose = require("mongoose")
 const cors = require("cors")
-const UserSchema = require("./UserSchema/UserSchema")
+const User = require("./UserSchema/User")
 const bodyParser = require("body-parser")
-const { userInfo } = require("os")
-//const Joi = require("@hapi/joi")
-require("dotenv").config()
+const bcrypt = require("bcrypt")
 
 /////// FEATURE BRANCH WITH NO JOI. #The_sad_branch..
 
@@ -16,10 +15,15 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 //ROUTES
-app.post("/api/auth/signup", (req, res) => {
+app.post("/api/auth/signup", async (req, res) => {
   console.log("Ca post sur la page signup papy ! ")
-  console.log("log L21 email avant validation: " + req.body.email)
-  console.log("log L22 PW avant validation: " + req.body.password)
+
+  //Check if email already exist in the data base
+  const emailExist = await User.findOne({email: req.body.email})
+  if(emailExist){ 
+    console.log('email already exist')
+      return res.status(400).send('Email already exist')
+    }
 
   //  const {email, password} = req.body
   let errors = []
@@ -27,6 +31,7 @@ app.post("/api/auth/signup", (req, res) => {
   //Check if all fields are field up
   if (!req.body.email || !req.body.password) {
     errors.push({ message: "All fields are required !" })
+    return
   }
 
   //Check if Email is valide :
@@ -34,12 +39,17 @@ app.post("/api/auth/signup", (req, res) => {
   // regex 2 : /\S+@\S+\.\S+/
 
   console.log("match result: " + req.body.email.match(/\S+@\S+\.\S+/))
+  const emailPattenValide = /\S+@\S+\.\S+/
+  let emailTestResult = req.body.email.match(emailPattenValide)
 
-  if (req.body.email.match(/\S+@\S+\.\S+/) == null) {
+  console.log("Email Test Result: " + emailTestResult)
+
+  if (emailTestResult !== null) {
+    console.log("log L39 email after succeeded validation : " + req.body.email)
+  } else {
     console.log("log L38 email après validation failure : " + req.body.email)
     errors.push({ message: "Please enter a valide email" })
-  } else {
-    console.log("log L39 email after succeeded validation : " + req.body.email)
+    
   }
 
   //Check if password length is greater than 6 caraters
@@ -52,9 +62,16 @@ app.post("/api/auth/signup", (req, res) => {
   if (errors.length > 0) {
     res.status(400).send(errors)
   } else {
-    res.status(200).body
-    
-}
+    const user = new User(req.body)
+    user
+      .save()
+      .then((dbUser) => {
+        res.status(200).send({ message: "You are logged in" })
+      })
+      .catch((err) => {
+        res.status(401).send({ message: err.message })
+      })
+  }
   console.log(errors)
 })
 
