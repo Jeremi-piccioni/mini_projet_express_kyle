@@ -14,7 +14,7 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
-//ROUTES
+//REGISTER ROUTE ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.post("/api/auth/signup", async (req, res) => {
   console.log("Ca post sur la page signup papy ! ")
 
@@ -61,8 +61,22 @@ app.post("/api/auth/signup", async (req, res) => {
 
   if (errors.length > 0) {
     res.status(400).send(errors)
-  } else {
-    const user = new User(req.body)
+  }
+
+  //Create a new user
+  else {
+
+  //Hash passwords
+  const salt = await bcrypt.genSalt(10)
+  const hashedPW = await bcrypt.hash(req.body.password, salt)
+  console.log(hashedPW)
+
+    const user = new User(
+        {
+            email: req.body.email,
+            password: hashedPW
+        }
+    )
     user
       .save()
       .then((dbUser) => {
@@ -75,24 +89,34 @@ app.post("/api/auth/signup", async (req, res) => {
   console.log(errors)
 })
 
-app.get("/api/auth/signup", (req, res) => {
-  console.log("Ca get sur la page home Johnny ! ")
-  console.log(req.body.email)
-  console.log(req.body.password)
+// LOGIN ROUTE //////////////////////////////////////////////////////////////////////////////////////////////////////////
+app.post("/api/auth/login", async (req, res) => {
+
+  console.log("Ca surf sur le post REGISTER tonton ! ")
+  const user = await User.findOne({email: req.body.email})
+
+  if(!user){ 
+      console.log('This user is not registed at Sopekocko yet')
+      return res.status(400).send('This email is not registed at Sopekocko yet')
+    }
+  else{
+    console.log('Email exist but PASSWORD NOT VERIFIED YET')
+
+    //Check if password if correct
+    const validPW = await bcrypt.compare(req.body.password, user.password)
+
+    if(!validPW){ return res.status(400).send('Password is wrong')}
+
+    console.log('Pass throu PW verification')
+    res.status(200).send({ message: "Welcome to Sopeckocko Dude !" })
+    
+  } 
 })
 
-app.post("/api/auth/login", (req, res) => {
-  console.log("Ca surf sur le post register tonton ! ")
-  res.status(200).send({ message: "It all good baby" })
-})
 
-app.get("/api/auth/login", (req, res) => {
-  req.body
-  console.log("Ca surf sur le get register jean louis ! ")
-})
+
 
 //Connexion to Mongoose DB
-
 mongoose
   .connect(process.env.DB_PW, { useNewUrlParser: true })
   .then(() => console.log("Connected to MongoDB Baby !!!"))
