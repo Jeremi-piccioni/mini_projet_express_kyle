@@ -7,6 +7,8 @@ const cors = require("cors")
 const User = require("./UserSchema/User")
 const bodyParser = require("body-parser")
 const bcrypt = require("bcrypt")
+const jwt = require('jsonwebtoken')
+const auth = require('./verifyToken')
 
 /////// FEATURE BRANCH WITH NO JOI. #The_sad_branch..
 
@@ -22,7 +24,7 @@ app.post("/api/auth/signup", async (req, res) => {
   const emailExist = await User.findOne({email: req.body.email})
   if(emailExist){ 
     console.log('email already exist')
-      return res.status(400).send('Email already exist')
+    return res.status(400).send({message:'Email already exist'})
     }
 
   //  const {email, password} = req.body
@@ -30,8 +32,7 @@ app.post("/api/auth/signup", async (req, res) => {
 
   //Check if all fields are field up
   if (!req.body.email || !req.body.password) {
-    errors.push({ message: "All fields are required !" })
-    return
+    errors.push("All fields are required !")
   }
 
   //Check if Email is valide :
@@ -48,19 +49,19 @@ app.post("/api/auth/signup", async (req, res) => {
     console.log("log L39 email after succeeded validation : " + req.body.email)
   } else {
     console.log("log L38 email après validation failure : " + req.body.email)
-    errors.push({ message: "Please enter a valide email" })
+    errors.push("Please enter a valide email")
     
   }
 
   //Check if password length is greater than 6 caraters
   if (req.body.password.length < 6) {
-    errors.push({ message: "Password must be at least 6 caraters" })
+    errors.push("Password must be at least 6 caraters" )
   } else {
     console.log("log L24 PW après validation success : " + req.body.password)
   }
 
   if (errors.length > 0) {
-    res.status(400).send(errors)
+    res.status(400).send({message: errors.join(" / ")})
   }
 
   //Create a new user
@@ -80,7 +81,8 @@ app.post("/api/auth/signup", async (req, res) => {
     user
       .save()
       .then((dbUser) => {
-        res.status(200).send({ message: "You are logged in" })
+        let jwtToken = jwt.sign({ userId: dbUser._id }, process.env.TOKEN_SECRET)
+        res.status(200).header('auth-token',jwtToken).send({ message: "You are logged in" })
       })
       .catch((err) => {
         res.status(401).send({ message: err.message })
@@ -97,7 +99,7 @@ app.post("/api/auth/login", async (req, res) => {
 
   if(!user){ 
       console.log('This user is not registed at Sopekocko yet')
-      return res.status(400).send('This email is not registed at Sopekocko yet')
+      return res.status(400).send({message:'This email is not registed at Sopekocko yet'})
     }
   else{
     console.log('Email exist but PASSWORD NOT VERIFIED YET')
@@ -105,15 +107,13 @@ app.post("/api/auth/login", async (req, res) => {
     //Check if password if correct
     const validPW = await bcrypt.compare(req.body.password, user.password)
 
-    if(!validPW){ return res.status(400).send('Password is wrong')}
+    if(!validPW){ return res.status(400).send({message:'Password is wrong'}) }
 
     console.log('Pass throu PW verification')
     res.status(200).send({ message: "Welcome to Sopeckocko Dude !" })
     
   } 
 })
-
-
 
 
 //Connexion to Mongoose DB
