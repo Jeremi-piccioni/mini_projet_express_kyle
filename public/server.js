@@ -9,7 +9,6 @@ const bodyParser = require("body-parser")
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken')
 const auth = require('./verifyToken')
-const verify = require('./verifyToken')
 
 /////// FEATURE BRANCH WITH NO JOI. #The_sad_branch..
 
@@ -17,24 +16,10 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
-//Secret route/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// app.get("/post", verify,  (req, res) => {
-//   res.json({
-//        post: { 
-//             title: "shuut !",
-//             description: "It 's a secret" 
-//            }
-//   })
-//   console.log('LOGGER : A touché la route secrete')
-// })
- 
-
-//SIGN UP ROUTE ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-app.post("/api/auth/signup", async (req, res) => {                                //        api/auth/signup   <--good route
+//REGISTER ROUTE ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+app.post("/", async (req, res) => {                                //        api/auth/signup   <--good route
   console.log("Ca post sur la page signup papy ! ")
-  
+
   //Check if email already exist in the data base
   const emailExist = await User.findOne({email: req.body.email})
   if(emailExist){ 
@@ -53,8 +38,8 @@ app.post("/api/auth/signup", async (req, res) => {                              
   //Check if Email is valide :
   // regex : /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
   // regex 2 : /\S+@\S+\.\S+/
-  console.log('req.body.email: '+ req.body.email)
-  console.log("match result: " +  req.body.email.match(/\S+@\S+\.\S+/))
+
+  console.log("match result: " + req.body.email.match(/\S+@\S+\.\S+/))
   const emailPattenValide = /\S+@\S+\.\S+/
   let emailTestResult = req.body.email.match(emailPattenValide)
 
@@ -85,9 +70,7 @@ app.post("/api/auth/signup", async (req, res) => {                              
   //Hash passwords
   const salt = await bcrypt.genSalt(10)
   const hashedPW = await bcrypt.hash(req.body.password, salt)
-  
-  console.log('Clear PW = ' + req.body.password)
-  console.log('HashedPW =' + hashedPW)
+  console.log(hashedPW)
 
     const user = new User(
         {
@@ -100,17 +83,16 @@ app.post("/api/auth/signup", async (req, res) => {                              
       .then((dbUser) => {
         let jwtToken = jwt.sign({ userId: dbUser._id }, process.env.TOKEN_SECRET)
         res.status(200).header('auth-token',jwtToken).send({ message: "You are logged in" })
-        console.log('Token given from signup page: '+ jwtToken )
       })
       .catch((err) => {
         res.status(401).send({ message: err.message })
       })
   }
-  console.log('Errors array:'+ errors)
+  console.log(errors)
 })
 
 // LOGIN ROUTE //////////////////////////////////////////////////////////////////////////////////////////////////////////
-app.post("/api/auth/login", /*verify, */ async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
 
   console.log("Ca surf sur le post REGISTER tonton ! ")
   const user = await User.findOne({email: req.body.email})
@@ -121,14 +103,12 @@ app.post("/api/auth/login", /*verify, */ async (req, res) => {
     }
   else{
     console.log('Email exist but PASSWORD NOT VERIFIED YET')
-    console.log('Clear PW: ' + req.body.password)
 
     //Check if password if correct
     const validPW = await bcrypt.compare(req.body.password, user.password)
 
     if(!validPW){ return res.status(400).send({message:'Password is wrong'}) }
 
-    
     console.log('Pass throu PW verification')
     res.status(200).send({ message: "Welcome to Sopeckocko Dude !" })
     
@@ -136,33 +116,33 @@ app.post("/api/auth/login", /*verify, */ async (req, res) => {
 })
 
 
-// //PRIVATE ROUTE TO TEST THE JWT TOKEN
-// app.post("/", async (req, res) => {
+//PRIVATE ROUTE TO TEST THE JWT TOKEN
+app.post("/api/auth/signup", async (req, res) => {
 
-//     //Hash passwords
-//     const salt = await bcrypt.genSalt(10)
-//     const hashedPW = await bcrypt.hash(req.body.password, salt)
-//     console.log(hashedPW)
+    //Hash passwords
+    const salt = await bcrypt.genSalt(10)
+    const hashedPW = await bcrypt.hash(req.body.password, salt)
+    console.log(hashedPW)
   
-//       const user = new User(
-//           {
-//               email: req.body.email,
-//               password: hashedPW
-//           }
-//       )
-//       user
-//         .save()
-//         .then((dbUser) => {
-//           let jwtToken = jwt.sign({ userId: dbUser._id }, process.env.TOKEN_SECRET)
-//           res.status(200).header('auth-token',jwtToken).send({ message: "You are logged in" })
-//         })
-//         .catch((err) => {
-//           res.status(401).send({ message: err.message })
-//         })
-// })
+      const user = new User(
+          {
+              email: req.body.email,
+              password: hashedPW
+          }
+      )
+      user
+        .save()
+        .then((dbUser) => {
+          let jwtToken = jwt.sign({ userId: dbUser._id }, process.env.TOKEN_SECRET)
+          res.status(200).header('auth-token',jwtToken).send({ message: "You are logged in" })
+        })
+        .catch((err) => {
+          res.status(401).send({ message: err.message })
+        })
+})
 
 //Display Static Page
-app.use(express.static("public"));
+app.use(express.static('public'));
 
 //Connexion to Mongoose DB
 mongoose
