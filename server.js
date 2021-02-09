@@ -10,29 +10,18 @@ const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken')
 const auth = require('./verifyToken')
 const verify = require('./verifyToken')
+const { json } = require("body-parser")
+const sauce = require('./UserSchema/Sauce')
+const Sauce = require("./UserSchema/Sauce")
 
 /////// FEATURE BRANCH WITH NO JOI. #The_sad_branch..
 
 app.use(cors())
 app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
-
-//Secret route/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// app.get("/post", verify,  (req, res) => {
-//   res.json({
-//        post: { 
-//             title: "shuut !",
-//             description: "It 's a secret" 
-//            }
-//   })
-//   console.log('LOGGER : A touché la route secrete')
-// })
- 
+app.use(express.urlencoded({ extended: true }))
 
 //SIGN UP ROUTE ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-app.post("/api/auth/signup", async (req, res) => {                                //        api/auth/signup   <--good route
+app.post("/api/auth/signup", async (req, res) => {                         
   console.log("Ca post sur la page signup papy ! ")
   
   //Check if email already exist in the data base
@@ -136,30 +125,24 @@ app.post("/api/auth/login", /*verify, */ async (req, res) => {
 })
 
 
-// //PRIVATE ROUTE TO TEST THE JWT TOKEN
-// app.post("/", async (req, res) => {
+//Post on sauce route ///////////////////////////////////////////////////////////////////////////////////////
+app.post('/api/sauces', async (req,res) => { 
 
-//     //Hash passwords
-//     const salt = await bcrypt.genSalt(10)
-//     const hashedPW = await bcrypt.hash(req.body.password, salt)
-//     console.log(hashedPW)
-  
-//       const user = new User(
-//           {
-//               email: req.body.email,
-//               password: hashedPW
-//           }
-//       )
-//       user
-//         .save()
-//         .then((dbUser) => {
-//           let jwtToken = jwt.sign({ userId: dbUser._id }, process.env.TOKEN_SECRET)
-//           res.status(200).header('auth-token',jwtToken).send({ message: "You are logged in" })
-//         })
-//         .catch((err) => {
-//           res.status(401).send({ message: err.message })
-//         })
-// })
+  console.log('Get in new-sauce Post')
+
+
+  util = require("util")
+  console.log(util.inspect(req.body))
+
+  let sauce = JSON.parse(req.body.sauce)
+
+  sauce = new Sauce(sauce)
+  await sauce
+  .save()
+  console.log('New sauce: '+ req.body.name + ' saved in Data Base')
+  res.status(200).send('New sauce: '+ req.body.name + ' saved in Data Base')
+})
+
 
 //Display Static Page
 app.use(express.static("public"));

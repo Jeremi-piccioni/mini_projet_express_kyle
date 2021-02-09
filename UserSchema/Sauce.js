@@ -1,6 +1,3 @@
-//const { date } = require("@hapi/joi")
-const mongoose = require("mongoose")
-
 //export class Sauce {   // Comes from Front end schema
     //     _id: string;
     //     name: string;
@@ -15,14 +12,15 @@ const mongoose = require("mongoose")
     //     usersDisliked: string[];
     //     userId: string;
     //   }
+const mongoose = require("mongoose")
 
 const SauceSchema = new mongoose.Schema(
   {
 
-      _id: {
-        type: String,
-        required: true,
-      },
+      // _id: {                   <-- necessaire ? puisque MongoDB creer un id d'office ???? ICI ObjectId 
+      //   type: String,
+      //   required: true,
+      // },
       name: {
         type: String,
         required: true,
@@ -57,17 +55,17 @@ const SauceSchema = new mongoose.Schema(
       },
 
       usersLiked: {
-        type: String,
+        type: [String],
         required: true,
       },
       usersDisliked: {
+        type: [String],
+        required: true,
+      },
+      userId: {                      // Necessary ??
         type: String,
         required: true,
       },
-    //   userId: {                      // Necessary ??
-    //     type: String,
-    //     required: true,
-    //   },
       date: { type: Date,
               default: Date.now()
       }
